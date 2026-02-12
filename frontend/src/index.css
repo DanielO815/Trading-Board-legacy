@@ -1,0 +1,314 @@
+/* frontend/src/index.css
+/* Dark-Theme Basis */
+:root {
+  --bg: #000;        /* Hintergrund */
+  --fg: #fff;        /* Text */
+  --muted: #b3b3b3;  /* Sekundärtext */
+  --border: #222;    /* Linien */
+  --accent: #4dabf7; /* Akzentfarbe */
+  --pad-x: 24px;     /* horizontale Innenabstände */
+  --panel-border: rgba(77, 171, 247, 0.6);  /* Button-Blau, softer */
+  --panel-border-strong: rgba(77, 171, 247, 0.9);
+  --accent-soft: rgba(77, 171, 247, 0.45);
+  --accent-soft-hover: rgba(77, 171, 247, 0.65);
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.btn-row {
+  display: flex;
+  align-items: center; 
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Header / Titel */
+.page-header {
+  background: var(--bg);
+  padding: 12px var(--pad-x);
+  border-bottom: 1px solid var(--border);
+  z-index: 1000;
+}
+.page-title {
+  margin: 0;
+  color: rgba(77, 171, 247, 0.9); /* 🔵 ruhiges Button-Blau */
+  font-weight: 600;
+}
+
+/* Inhalt */
+.main { padding: 24px var(--pad-x); }
+
+.panel-title-small {
+  font-size: 12px;      /* statt z. B. 18–20px */
+  margin-bottom: 8px;
+  margin: 0;
+  color: #fff;
+}
+
+/* Chart-Container */
+.chart { height: 300px; }
+.chart-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+}
+
+/* Button */
+.btn {
+  /* margin-top: 12px; */
+  background: rgba(77, 171, 247, 0.85); /* 🔵 weniger knallig */
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.7; cursor: default; }
+.btn:not(:disabled):hover {
+  background: rgb(93, 178, 248);
+}
+/* Fehleranzeige */
+.error { color: #ff6b6b; margin-top: 8px; }
+
+/* Links (optional) */
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Auswahlfarbe (optional) */
+::selection { background: #195cab; color: #fff; }
+
+.table-wrap {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.coin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.coin-table th,
+.coin-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.coin-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.coin-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.coins-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.search {
+  flex: 1;
+  min-width: 220px;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  outline: none;
+}
+
+.search:focus {
+  border-color: var(--accent);
+}
+
+.coins-meta {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.select, .chunk {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.chunk {
+  width: 90px;
+}
+/* Zeitraum-Dropdown (Select) */
+.select {
+  height: 36px;
+  line-height: normal;   /* 🔴 NICHT 36px */
+  display: inline-flex;  /* statt flex */
+  align-items: center;
+
+  background-color: #111;
+  color: #4dabf7;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+
+/* Optionen im geöffneten Dropdown */
+.select option {
+  background-color: #111;
+  color: #4dabf7;
+}
+
+/* Hover / Fokus */
+.select:hover,
+.select:focus {
+  border-color: #4dabf7;
+  outline: none;
+}
+/* Rahmen-Container für Button- & Filter-Reihen */
+.panel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  flex-wrap: wrap;
+}
+
+/* Text im Filter-Satz */
+.filter-text {
+  color: var(--fg);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.filter-text {
+  color: var(--fg);
+  font-size: 14px;
+  white-space: nowrap;
+}
+.select option[value="gestiegen"] {
+  color: #51cf66;
+}
+
+.select option[value="gefallen"] {
+  color: #ff6b6b;
+}
+/* Panel mit Titel */
+.panel {
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-top: 12px;
+}
+
+/* Titel im Panel */
+.panel-title {
+  padding: 6px 12px;
+  font-size: 15px;
+  
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.panel:hover {
+  border-color: var(--panel-border-strong);
+}
+
+/* Inhalt im Panel */
+.panel-content {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+/* Panel-Titel mit Button */
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+/* Kleiner Toggle-Button im Panel */
+.panel-toggle {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.panel-toggle:hover {
+  border-color: var(--accent);
+}
+/* Panels mit Tabellen sollen volle Breite nutzen */
+.panel.panel-table {
+  width: 100%;
+  overflow: hidden;
+}
+/* Tabellen-Panels: gleichmäßiger Innenabstand links & rechts */
+.panel.panel-table .panel-content {
+  padding: 0; /* 🔴 Padding hier weg */
+}
+
+/* Padding gehört um die Tabelle herum */
+.panel.panel-table .table-wrap {
+  width: 100%;
+  padding: 8px 12px;        /* ✅ gleicher Abstand links & rechts */
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+/* Tabelle selbst */
+.panel.panel-table .coin-table {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* Chart + rechter Infoblock sticky */
+.chart-sticky {
+  position: sticky;
+  top: 0px;              /* Abstand zum oberen Rand */
+  z-index: 50;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--bg);  /* verhindert Durchscheinen */
+  padding-bottom: 8px;    /* optischer Abschluss */
+}
