@@ -1,3 +1,11 @@
+/**
+ * Root-Komponente der Applikation.
+ * 
+ * Rendert Seitenkopf und lädt Haupt-Demo-Komponente ChartDemo.
+ * 
+ * @returns {JSX.Element} App-Layout mit Header und Chart-Ansicht
+ */
+
 import ChartDemo from "./ChartDemo.jsx";
 
 export default function App() {
