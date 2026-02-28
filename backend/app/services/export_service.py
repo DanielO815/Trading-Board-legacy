@@ -14,19 +14,37 @@ from .coinbase import cb_get_products, cb_daily_closes, COINBASE_EXPORT_SLEEP
 
 class ExportService:
     """
-    Verwaltet Coinbase-Export-Jobs in-memory (wie im legacy main.py),
-    aber gekapselt statt globale Variablen.
+    Verwaltet Coinbase-Export-Jobs und deren Verwaltung im Memory mit gekapselt
+    strukturiertem State statt globalen Variablen.
     """
 
     def __init__(self, export_dir: Path):
+        """
+        Initialisiert den Export-Service mit Exportverzeichnis.
+
+        Args:
+            export_dir: Pfad zum Verzeichnis für Export-Dateien.
+        """
         self.export_dir = export_dir
         self.jobs: dict[str, dict[str, Any]] = {}
         self._stop_requested: bool = False
 
     def stop_coinbase_export(self) -> None:
+        """
+        Signalisiert Stopp-Anforderung für laufende Export-Operationen.
+        """
         self._stop_requested = True
 
     def get_status(self, job_id: str) -> dict[str, Any] | None:
+        """
+        Ruft Status eines Export-Jobs mit Prozentfortschritt ab.
+
+        Args:
+            job_id: Eindeutige Job-Kennung.
+
+        Returns:
+            Wörterbuch mit Job-Status, Fortschritt und Metadaten oder None wenn nicht gefunden.
+        """
         job = self.jobs.get(job_id)
         if not job:
             return None
@@ -36,6 +54,19 @@ class ExportService:
         return {**job, "percent": percent}
 
     async def start_coinbase_export(self, symbols: list[str], years: int) -> str:
+        """
+        Startet asynchronen Coinbase-Export-Job für angegebene Symbole.
+
+        Args:
+            symbols: Liste von Krypto-Symbolen (z.B. ['BTC', 'ETH']).
+            years: Anzahl der Jahre für Datenabfrage (begrenzt auf 1-15).
+
+        Returns:
+            Eindeutige Job-Kennung für Statusabfragen.
+
+        Raises:
+            ValueError: Wenn keine gültigen Symbole vorhanden sind.
+        """
         years = max(1, min(int(years), 15))
         symbols = [s.strip().upper() for s in symbols if s and s.strip()]
         symbols = list(dict.fromkeys(symbols))
@@ -60,6 +91,14 @@ class ExportService:
         return job_id
 
     async def _run_coinbase_export_job(self, job_id: str, symbols: list[str], years: int) -> None:
+        """
+        Führt Coinbase-Export im Hintergrund aus und speichert Daten in CSV-Datei.
+
+        Args:
+            job_id: Eindeutige Job-Kennung.
+            symbols: Liste von Krypto-Symbolen für Export.
+            years: Zeitraum in Jahren für Datenabfrage.
+        """
         from ..infra.storage import cleanup_old_coinbase_exports, make_coinbase_export_filename
 
         # Alte Coinbase-CSV-Dateien löschen (wie legacy)

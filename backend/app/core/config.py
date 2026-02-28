@@ -1,3 +1,13 @@
+"""
+Zentralisierte Konfiguration für Applikation.
+
+Module:
+    CORS: Verzeichnisse für zulässige Cross-Origin-Anfragen.
+    Storage: Export-Verzeichnis-Einstellungen.
+    Limits: API- und Abfrage-Beschränkungen.
+    Rate-Limiting: Verzögerungen für externe API-Aufrufe.
+"""
+
 import os
 
 # --- CORS ---

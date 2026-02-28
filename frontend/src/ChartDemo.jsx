@@ -10,10 +10,8 @@ import {
   Legend,
   Tooltip,
 } from "chart.js";
-import api from "./api";
+import { apiGet, apiPost } from "./api";
 Chart.register(LineElement, PointElement, LinearScale, CategoryScale, Legend, Tooltip);
-const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
-if (!API) throw new Error("VITE_API_BASE is not set");
 
 // Plugin: draw saved and temporary lines from options.plugins.lineDrawer
 const lineDrawer = {
@@ -212,10 +210,8 @@ export default function ChartDemo() {
     setCoinsLoading(true);
     setCoinsErr(null);
     try {
-      const r = await fetch(`${API}/api/coins?quote=USD&limit=200`);
-      if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-      const d = await r.json();
-      setCoins(d.coins ?? []);
+      const d = await apiGet(`/api/coins?quote=USD&limit=200`);
+setCoins(d.coins ?? []);
     } catch (e) {
       setCoinsErr(e.message);
     } finally {
@@ -230,17 +226,11 @@ export default function ChartDemo() {
     setShowMA(false);
 
     try {
-      const [histRes, priceRes] = await Promise.all([
-        fetch(`${API}/api/btc/history?years=${years}`),
-        fetch(`${API}/api/btc/price`),
+      const [hist, price] = await Promise.all([
+        apiGet(`/api/btc/history?years=${years}`),
+        apiGet(`/api/btc/price`),
       ]);
-
-      if (!histRes.ok) throw new Error(`History: ${histRes.status} ${histRes.statusText}`);
-      if (!priceRes.ok) throw new Error(`Price: ${priceRes.status} ${priceRes.statusText}`);
-
-      const hist = await histRes.json();
-      const price = await priceRes.json();
-      setCurrentPrice(Number(price.price_usd));
+setCurrentPrice(Number(price.price_usd));
       setCurrentName("BTC");
 
       const labels = hist.labels ?? [];
@@ -264,19 +254,12 @@ export default function ChartDemo() {
   // Filer Funktionen
   const applyFilter = async () => {
   try {
-    const r = await fetch(`${API}/api/filter/coinbase`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        years: filterYears,
-        percent: filterPercent,
-        direction: filterDirection,
-      }),
+    const data = await apiPost(`/api/filter/coinbase`, {
+      years: filterYears,
+      percent: filterPercent,
+      direction: filterDirection,
     });
-
-    if (!r.ok) throw new Error(await r.text());
-    const data = await r.json();
-    setFilteredResults(data.results || []);
+setFilteredResults(data.results || []);
   } catch (e) {
     alert("Filter-Fehler: " + e.message);
   }
@@ -296,12 +279,8 @@ export default function ChartDemo() {
     setShowMA(false);
 
     try {
-      const r = await fetch(`${API}/api/csv/history/${symbol}`);
-      if (!r.ok) throw new Error("CSV-Fehler");
-
-      const d = await r.json();
-
-      if (!d.available || d.data.length === 0) {
+      const d = await apiGet(`/api/csv/history/${symbol}`);
+if (!d.available || d.data.length === 0) {
         setMissingSymbols((prev) => new Set(prev).add(symbol));
         return;
       }
@@ -340,20 +319,11 @@ export default function ChartDemo() {
     try {
       const symbols = filteredSortedCoins.map((c) => c.symbol).filter(Boolean);
 
-      const r = await fetch(`${API}/api/export/coinbase/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbols, years }),
-      });
-
-      if (!r.ok) throw new Error(await r.text());
-      const { job_id } = await r.json();
-
-      const poll = setInterval(async () => {
+      const { job_id } = await apiPost(`/api/export/coinbase/start`, { symbols, years });
+const poll = setInterval(async () => {
         try {
-          const s = await fetch(`${API}/api/export/coinbase/status/${job_id}`);
-          const d = await s.json();
-          setCbStatus(d);
+          const d = await apiGet(`/api/export/coinbase/status/${job_id}`);
+setCbStatus(d);
 
           if (d.status === "done" ) {
             clearInterval(poll);
@@ -426,25 +396,19 @@ export default function ChartDemo() {
   const runSavingsSimulation = async () => {
     if (!currentName) return;
 
-    const r = await fetch(`${API}/api/simulate/savings`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    let d;
+    try {
+      d = await apiPost(`/api/simulate/savings`, {
         symbol: currentName,
         years: savingsYears,
         monthly_usd: savingsAmount,
-      }),
-    });
-
-    if (!r.ok) {
+      });
+    } catch (e) {
       setSavingsResult("Fehler");
       setSavingsCashOnly("");
       return;
     }
-
-    const d = await r.json();
-
-    // 🔹 investiertes Ergebnis (wie bisher)
+// 🔹 investiertes Ergebnis (wie bisher)
     setSavingsResult(
       d.result_usd.toLocaleString("de-DE", {
         minimumFractionDigits: 2,
@@ -468,22 +432,15 @@ export default function ChartDemo() {
   const runDynamicSavingsSimulation = async () => {
     if (!currentName) return;
 
-    const r = await fetch(`${API}/api/simulate/savings_dynamic`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        symbol: currentName,
-        years: dynYears,
-        monthly_usd: dynAmount,
-        threshold_pct: dynThreshold,
-        adjust_pct: dynAdjust,
-        ma_days: dynMaDays,
-      }),
+    const d = await apiPost(`/api/simulate/savings_dynamic`, {
+      symbol: currentName,
+      years: dynYears,
+      monthly_usd: dynAmount,
+      threshold_pct: dynThreshold,
+      adjust_pct: dynAdjust,
+      ma_days: dynMaDays,
     });
-
-    const d = await r.json();
-
-    setDynResult(
+setDynResult(
       d.total_value_usd.toLocaleString("de-DE", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -721,7 +678,7 @@ export default function ChartDemo() {
           <button
             className="btn"
             onClick={async () => {
-              await fetch(`${API}/api/export/coinbase/stop`, { method: "POST" });
+              await apiPost(`/api/export/coinbase/stop`);
             }}
           >
             Export stoppen

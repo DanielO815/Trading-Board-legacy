@@ -13,11 +13,29 @@ _PRODUCTS_TTL = timedelta(hours=1)
 
 
 def iso_z(dt: datetime) -> str:
+    """
+    Konvertiert Datetime zu ISO 8601-Format mit Z-Suffix für UTC.
+
+    Args:
+        dt: Datetime-Objekt zur Konvertierung.
+
+    Returns:
+        ISO 8601-String im Format YYYY-MM-DDTHH:MM:SSZ.
+    """
     dt = dt.astimezone(timezone.utc).replace(microsecond=0)
     return dt.isoformat().replace("+00:00", "Z")
 
 
 async def cb_get_products(client: httpx.AsyncClient) -> list[dict]:
+    """
+    Ruft verfügbare Handelsprodukte von Coinbase-API mit 1-Stunden-Cache ab.
+
+    Args:
+        client: Asynchroner HTTP-Client für API-Anfrage.
+
+    Returns:
+        Liste von Produkt-Wörterbüchern mit Informationen wie Währungspaare und Status.
+    """
     now = datetime.now(timezone.utc)
     if _products_cache["at"] and _products_cache["payload"] and (now - _products_cache["at"]) < _PRODUCTS_TTL:
         return _products_cache["payload"]
@@ -37,6 +55,19 @@ async def cb_get_candles(
     end: datetime,
     granularity: int = 86400,
 ) -> list:
+    """
+    Ruft OHLCV-Candlestick-Daten von Coinbase-API ab.
+
+    Args:
+        client: Asynchroner HTTP-Client für API-Anfrage.
+        product_id: Handelsprodukt-Kennung (z.B. "BTC-USD").
+        start: Startdatum und -zeit für Datenbereich.
+        end: Enddatum und -zeit für Datenbereich.
+        granularity: Candlestick-Intervall in Sekunden (Standard: 86400 für täglich).
+
+    Returns:
+        Liste von OHLCV-Candlestick-Daten als Listen [timestamp, open, high, low, close, volume].
+    """
     params = {"start": iso_z(start), "end": iso_z(end), "granularity": granularity}
     r = await client.get(f"{COINBASE_BASE}/products/{product_id}/candles", params=params)
     r.raise_for_status()
@@ -48,6 +79,20 @@ async def cb_daily_closes(
     product_id: str,
     years: int,
 ) -> list[tuple[str, float]]:
+    """
+    Ruft tägliche Schlusskurse aus Coinbase-Candle-Daten mit Pagination ab.
+
+    Segmentiert Abfragebereich in 300-Candle-Blöcke zur Einhaltung von API-Limits.
+    Dedupliziert Einträge und überspringt heutiges Datum.
+
+    Args:
+        client: Asynchroner HTTP-Client für API-Anfragen.
+        product_id: Handelsprodukt-Kennung.
+        years: Zeitraum in Jahren für Datenabfrage.
+
+    Returns:
+        Liste von Tupeln (ISO-Datum, Schlusskurs in USD).
+    """
     granularity = 86400
     block = timedelta(seconds=granularity * 300)
 
@@ -115,6 +160,15 @@ async def cb_daily_closes(
 
 
 async def get_btc_price_usd() -> float:
+    """
+    Ruft aktuellen Bitcoin-Preis von Coinbase Exchange ab.
+
+    Returns:
+        Bitcoin-Preis in USD als Float.
+
+    Raises:
+        httpx.HTTPError: Bei Netzwerkfehlern oder ungültiger Antwort.
+    """
     headers = {"Accept": "application/json", "User-Agent": "onepager-fastapi/0.5"}
     timeout = httpx.Timeout(20.0, connect=10.0)
     async with httpx.AsyncClient(timeout=timeout, headers=headers) as client:
@@ -125,6 +179,16 @@ async def get_btc_price_usd() -> float:
 
 
 async def get_history_daily_closes(product_id: str, years: int) -> tuple[list[str], list[float]]:
+    """
+    Ruft strukturierte Kursverlauf-Daten für Handelsprodukt ab.
+
+    Args:
+        product_id: Handelsprodukt-Kennung (z.B. "BTC-USD").
+        years: Zeitraum in Jahren für Datenabfrage.
+
+    Returns:
+        Tupel aus Liste von ISO-Daten und entsprechenden Schlusskursen in USD.
+    """
     headers = {"Accept": "application/json", "User-Agent": "onepager-fastapi/0.5"}
     timeout = httpx.Timeout(30.0, connect=15.0)
     async with httpx.AsyncClient(timeout=timeout, headers=headers) as client:

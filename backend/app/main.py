@@ -19,6 +19,14 @@ from .services.csv_tools_service import CsvToolsService
 
 
 def create_app() -> FastAPI:
+    """
+    Erstellt und konfiguriert FastAPI-Applikationsinstanz.
+
+    Konfiguriert CORS-Middleware, registriert Services und API-Router.
+
+    Returns:
+        Konfigurierte FastAPI-Applikation.
+    """
     app = FastAPI(title="OnePager API", version="0.5.0")
 
     app.add_middleware(

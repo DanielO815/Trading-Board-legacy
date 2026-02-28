@@ -19,6 +19,12 @@ _coins_cache: dict[str, Any] = {"at": None, "payload": None}
 
 
 def _cg_headers() -> dict[str, str]:
+    """
+    Generiert HTTP-Header für CoinGecko-API-Anfragen mit optionalen API-Schlüsseln.
+
+    Returns:
+        Wörterbuch mit Accept, User-Agent und optionalen API-Schlüsseln.
+    """
     h = {"Accept": "application/json", "User-Agent": "onepager-fastapi/0.5"}
     demo = os.getenv("COINGECKO_DEMO_KEY")
     pro = os.getenv("COINGECKO_PRO_KEY")
@@ -31,6 +37,19 @@ def _cg_headers() -> dict[str, str]:
 
 
 async def cg_get(url: str, params: dict[str, Any] | None = None) -> Any:
+    """
+    Führt CoinGecko-API-Anfrage mit automatischem Retry aus.
+
+    Args:
+        url: API-Endpunkt-URL.
+        params: Optionale Query-Parameter.
+
+    Returns:
+        Geparste JSON-Antwort.
+
+    Raises:
+        HTTPException: Bei Netzwerkfehlern oder nach Ausschöpfung von Wiederholungsversuchen.
+    """
     for attempt in range(4):
         try:
             async with httpx.AsyncClient(timeout=30, headers=_cg_headers()) as client:
@@ -54,7 +73,18 @@ async def cg_get(url: str, params: dict[str, Any] | None = None) -> Any:
 @router.get("/api/coins")
 async def coins(limit: int = 100, quote: str = "USD"):
     """
-    Coins für Tabelle (Preis + Marketcap).
+    Endpoint: Top-Kryptowährungen mit Marktkapitalisierung und Preisveränderung.
+
+    Query Parameter:
+        limit: Anzahl der rückzugebenden Coins (1-500, Standard: 100).
+        quote: Währung für Preise (aktuell nur USD unterstützt).
+
+    Returns:
+        JSON mit Coin-Details (Symbol, Name, Preis, Marktkapitalisierung, 24h-Veränderung).
+        Nutzt 5-Minuten-Cache zur Reduzierung von API-Anfragen.
+
+    Raises:
+        HTTPException: Bei ungültiger Quote-Währung (Status 400) oder API-Fehler (Status 502).
     """
     quote = (quote or "USD").upper()
     if quote != "USD":

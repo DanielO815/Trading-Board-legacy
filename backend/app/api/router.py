@@ -1,3 +1,10 @@
+"""
+Hauptrouter-Konfiguration.
+
+Integriert alle API-Route-Module (Health, Coins, Bitcoin, Exports, CSV-Tools)
+in zentralen API-Router.
+"""
+
 from fastapi import APIRouter
 
 from .routes.health import router as health_router

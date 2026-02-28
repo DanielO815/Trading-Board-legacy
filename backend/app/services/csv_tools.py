@@ -40,10 +40,16 @@ def filter_coinbase(
     direction: str = "gestiegen",
 ) -> dict[str, Any]:
     """
-    Legacy-Filter:
-    - Zeitraum: years * 365 Tage
-    - Prozentänderung start->end innerhalb Zeitraum
-    - direction: "gestiegen" / "gefallen"
+    Filtert Symbole nach Preisänderung in gewähltem Zeitraum und Richtung.
+
+    Args:
+        prices_by_symbol: Wörterbuch mit Symbol-Keys und Listen von (Datum, Preis)-Tupeln.
+        years: Zeitraum in Jahren für Berechnung (Standard: 3).
+        percent: Mindestprozentsatz für Preisänderung (Standard: 20).
+        direction: Filterrichtung - "gestiegen" oder "gefallen" (Standard: "gestiegen").
+
+    Returns:
+        Wörterbuch mit Anzahl gefundener Symbole und deren Details (Symbol, Start-, Endpreis, Änderung, Zeitraum).
     """
     years = float(years)
     percent = float(percent)
@@ -94,7 +100,14 @@ def filter_coinbase(
 
 def csv_history(prices_by_symbol: dict[str, list[tuple[date, float]]], symbol: str) -> dict[str, Any]:
     """
-    Legacy: liefert labels/data für ein Symbol aus der CSV.
+    Ruft Kursverlauf für einzelnes Symbol ab.
+
+    Args:
+        prices_by_symbol: Wörterbuch mit Symbol-Keys und Listen von (Datum, Preis)-Tupeln.
+        symbol: Krypto-Symbol (z.B. "BTC", wird zu Großbuchstaben konvertiert).
+
+    Returns:
+        Wörterbuch mit Symbol, Verfügbarkeitsstatus und Listen für Daten-Visualisierung (labels, data).
     """
     symbol = (symbol or "").upper()
     rows = prices_by_symbol.get(symbol)
@@ -114,10 +127,18 @@ def simulate_savings(
     monthly_usd: float,
 ) -> dict[str, Any]:
     """
-    Legacy DCA:
-    - Kauf NUR am 1. des Monats
-    - fehlt der 1. -> Monat überspringen
-    - keine Gebühren
+    Simuliert Dollar-Cost-Averaging (DCA) Sparstrategie für Symbol über Zeitraum.
+
+    Kaufe jeden 1. des Monats (falls Daten vorhanden); keine Gebühren.
+
+    Args:
+        prices_by_symbol: Wörterbuch mit Symbol-Keys und Listen von (Datum, Preis)-Tupeln.
+        symbol: Krypto-Symbol.
+        years: Sparzeitraum in Jahren.
+        monthly_usd: Monatlicher Sparbetrag in USD.
+
+    Returns:
+        Wörterbuch mit Gesamtergebnis in USD und reinem Sparaufwand (cash_only_usd).
     """
     symbol = (symbol or "").upper()
     years = float(years)
@@ -162,7 +183,15 @@ def simulate_savings(
 
 def calc_ma_for_date(target_date: date, rows: list[tuple[date, float]], ma_days: int) -> float | None:
     """
-    Legacy: gleitender Durchschnitt der letzten ma_days Einträge <= target_date.
+    Berechnet gleitenden Durchschnitt für Zieldatum über angegebene Anzahl von Tagen.
+
+    Args:
+        target_date: Referenzdatum für Berechnung.
+        rows: Liste von (Datum, Preis)-Tupeln.
+        ma_days: Anzahl der Tage für Durchschnittsberechnung.
+
+    Returns:
+        Durchschnittspreis oder None wenn nicht genug historische Daten vorhanden sind.
     """
     relevant = [(d, p) for d, p in rows if d <= target_date]
     if len(relevant) < ma_days:
@@ -176,16 +205,27 @@ def simulate_savings_dynamic(
     symbol: str,
     years: float,
     monthly_usd: float,
-    threshold_pct: float,  # kommt als Prozent/100 rein (z.B. 0.05)
-    adjust_pct: float,     # kommt als Prozent/100 rein (z.B. 0.50)
+    threshold_pct: float,
+    adjust_pct: float,
     ma_days: int,
 ) -> dict[str, Any]:
     """
-    Legacy dynamic:
-    - nur Kauf am 1. des Monats (wenn kein price am 1. -> skip)
-    - MA über ma_days bis inkl. Datum
-    - if price >= MA*(1+threshold): invest reduktion, rest in cash_buffer
-    - if price <= MA*(1-threshold): invest + min(increase, cash_buffer)
+    Simuliert dynamische Sparstrategie mit gleitendem Durchschnitt und Schwellenwertanpassung.
+
+    Kaufe am 1. des Monats mit adaptierter Menge: Reduziere bei hohen Preisen (oberhalb MA),
+    sparen in Buffer; erhöhe bei niedrigen Preisen (unterhalb MA), nutze gepufferte Mittel.
+
+    Args:
+        prices_by_symbol: Wörterbuch mit Symbol-Keys und Listen von (Datum, Preis)-Tupeln.
+        symbol: Krypto-Symbol.
+        years: Sparzeitraum in Jahren.
+        monthly_usd: Basis-Monatsbetrag in USD.
+        threshold_pct: Prozentuale Schwelle (z.B. 0.05 für ±5%).
+        adjust_pct: Anpassungsfaktor für Erhöhung/Reduzierung (z.B. 0.50 für 50%).
+        ma_days: Anzahl der Tage für gleitenden Durchschnitt.
+
+    Returns:
+        Wörterbuch mit Gesamtergebnis in USD basierend auf dynamischer Allocation.
     """
     symbol = (symbol or "").upper()
     years = float(years)

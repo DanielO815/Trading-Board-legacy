@@ -24,6 +24,12 @@ _BTC_HISTORY_TTL = timedelta(minutes=5)
 
 
 def _cg_headers() -> dict[str, str]:
+    """
+    Generiert HTTP-Header für CoinGecko-API-Anfragen mit optionalen API-Schlüsseln.
+
+    Returns:
+        Wörterbuch mit Accept, User-Agent und optionalen API-Schlüsseln.
+    """
     h = {"Accept": "application/json", "User-Agent": "onepager-fastapi/0.5"}
     demo = os.getenv("COINGECKO_DEMO_KEY")
     pro = os.getenv("COINGECKO_PRO_KEY")
@@ -35,6 +41,19 @@ def _cg_headers() -> dict[str, str]:
 
 
 async def _cg_get(url: str, params: dict[str, Any] | None = None) -> Any:
+    """
+    Führt CoinGecko-API-Anfrage mit automatischem Retry und Fehlerbehandlung durch.
+
+    Args:
+        url: API-Endpunkt-URL.
+        params: Optionale Query-Parameter.
+
+    Returns:
+        Geparste JSON-Antwort.
+
+    Raises:
+        HTTPException: Bei Netzwerkfehlern oder nach Ausschöpfung von Wiederholungsversuchen.
+    """
     for attempt in range(4):
         try:
             async with httpx.AsyncClient(timeout=30, headers=_cg_headers()) as client:
@@ -56,6 +75,15 @@ async def _cg_get(url: str, params: dict[str, Any] | None = None) -> Any:
 
 
 async def _coingecko_btc_price_usd() -> float:
+    """
+    Ruft aktuellen Bitcoin-Preis von CoinGecko-API ab.
+
+    Returns:
+        Bitcoin-Preis in USD.
+
+    Raises:
+        HTTPException: Bei Abruf- oder Parse-Fehlern.
+    """
     j = await _cg_get(
         f"{COINGECKO_BASE}/simple/price",
         params={"ids": "bitcoin", "vs_currencies": "usd"},
@@ -67,6 +95,15 @@ async def _coingecko_btc_price_usd() -> float:
 
 
 async def _coingecko_btc_history_daily_closes(years: int) -> tuple[list[str], list[float]]:
+    """
+    Ruft historische tägliche Bitcoin-Schlusskurse von CoinGecko ab.
+
+    Args:
+        years: Zeitraum in Jahren (begrenzt auf 1-15).
+
+    Returns:
+        Tupel aus Liste von ISO-Daten und entsprechenden Preisen in USD.
+    """
     years = max(1, min(int(years), 15))
     days = int(years * 365)
 
@@ -102,8 +139,13 @@ async def _coingecko_btc_history_daily_closes(years: int) -> tuple[list[str], li
 
 async def get_btc_price_usd_with_fallback() -> tuple[str, float]:
     """
-    1) Coinbase Exchange versuchen
-    2) wenn 403/blocked/etc.: CoinGecko fallback
+    Ruft Bitcoin-Preis mit Fallback-Mechanismus ab.
+
+    Versucht zunächst Coinbase Exchange; bei Fehler fällt zur CoinGecko-API zurück.
+    Nutzt 10-Sekunden-Cache zur Reduzierung von API-Anfragen.
+
+    Returns:
+        Tupel aus Quelle ("coinbase_exchange" oder "coingecko") und Preis in USD.
     """
     now = datetime.now(timezone.utc)
 
@@ -125,8 +167,16 @@ async def get_btc_price_usd_with_fallback() -> tuple[str, float]:
 
 async def get_btc_history_with_fallback(years: int) -> tuple[str, list[str], list[float]]:
     """
-    1) Coinbase Exchange candles versuchen
-    2) wenn 403/blocked/etc.: CoinGecko fallback
+    Ruft Bitcoin-Kursverlauf mit Fallback-Mechanismus ab.
+
+    Versucht zunächst Coinbase Exchange; bei Fehler fällt zur CoinGecko-API zurück.
+    Nutzt 5-Minuten-Cache zur Reduzierung von API-Anfragen.
+
+    Args:
+        years: Zeitraum in Jahren (begrenzt auf 1-15).
+
+    Returns:
+        Tupel aus Quelle, Liste von ISO-Daten und entsprechenden Preisen in USD.
     """
     years = max(1, min(int(years), 15))
     now = datetime.now(timezone.utc)

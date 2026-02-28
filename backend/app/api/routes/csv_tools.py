@@ -10,6 +10,15 @@ router = APIRouter()
 
 
 def get_csv_tools_service(request: Request) -> CsvToolsService:
+    """
+    Dependency: Ruft CsvToolsService aus Applikationszustand ab.
+
+    Args:
+        request: HTTP-Request mit Applikationszustand.
+
+    Returns:
+        CsvToolsService-Instanz.
+    """
     return request.app.state.csv_tools_service
 
 
@@ -18,6 +27,17 @@ def filter_coinbase_ep(
     payload: Dict[str, Any] = Body(...),
     csv_svc: CsvToolsService = Depends(get_csv_tools_service),
 ):
+    """
+    Endpoint: Filtert Symbole nach Preisänderungen in Zeitraum und Richtung.
+
+    Request Body:
+        - years: Zeitraum in Jahren (optional, Standard: 3).
+        - percent: Mindestprozentsatz (optional, Standard: 20).
+        - direction: "gestiegen" oder "gefallen" (optional, Standard: "gestiegen").
+
+    Returns:
+        Filterergebnisse mit Anzahl und Details gefundener Symbole.
+    """
     years = float(payload.get("years", 3))
     percent = float(payload.get("percent", 20))
     direction = payload.get("direction", "gestiegen")
@@ -29,6 +49,15 @@ def csv_history_ep(
     symbol: str,
     csv_svc: CsvToolsService = Depends(get_csv_tools_service),
 ):
+    """
+    Endpoint: Ruft Kursverlauf für einzelnes Symbol ab.
+
+    Path Parameter:
+        symbol: Krypto-Symbol (z.B. "BTC").
+
+    Returns:
+        Kursverlaufsdaten mit Datum und Preis-Einträgen.
+    """
     return csv_svc.history(symbol)
 
 
@@ -37,6 +66,20 @@ def simulate_savings_ep(
     payload: Dict[str, Any] = Body(...),
     csv_svc: CsvToolsService = Depends(get_csv_tools_service),
 ):
+    """
+    Endpoint: Simuliert Dollar-Cost-Averaging-Strategie.
+
+    Request Body:
+        - symbol: Krypto-Symbol (erforderlich).
+        - years: Sparzeitraum in Jahren (optional, Standard: 1).
+        - monthly_usd: Monatlicher Sparbetrag in USD (erforderlich, > 0).
+
+    Returns:
+        Simulationsergebnis mit Gesamtwert und reinem Sparaufwand.
+
+    Raises:
+        HTTPException: Bei ungültigen Parametern (Status 400).
+    """
     symbol = (payload.get("symbol", "") or "").upper()
     years = float(payload.get("years", 1))
     monthly_usd = float(payload.get("monthly_usd", 0))
@@ -52,6 +95,20 @@ def simulate_savings_dynamic_ep(
     payload: Dict[str, Any] = Body(...),
     csv_svc: CsvToolsService = Depends(get_csv_tools_service),
 ):
+    """
+    Endpoint: Simuliert dynamische Sparstrategie mit gleitendem Durchschnitt.
+
+    Request Body:
+        - symbol: Krypto-Symbol (erforderlich).
+        - years: Sparzeitraum in Jahren (erforderlich).
+        - monthly_usd: Basis-Monatsbetrag in USD (erforderlich).
+        - threshold_pct: Schwelle für Anpassung in Prozent (erforderlich).
+        - adjust_pct: Anpassungsfaktor in Prozent (erforderlich).
+        - ma_days: Tage für gleitenden Durchschnitt (erforderlich).
+
+    Returns:
+        Simulationsergebnis mit dynamisch angepasstem Gesamtwert.
+    """
     symbol = payload["symbol"].upper()
     years = float(payload["years"])
     monthly_usd = float(payload["monthly_usd"])
