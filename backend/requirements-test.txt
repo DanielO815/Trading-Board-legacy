@@ -1,0 +1,16 @@
+# Test-Dependencies für Backend
+
+# Existing dependencies
+fastapi
+uvicorn
+truststore
+httpx
+python-dotenv
+
+# Test frameworks
+pytest>=7.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Mocking and testing utilities
+responses>=0.23.0
