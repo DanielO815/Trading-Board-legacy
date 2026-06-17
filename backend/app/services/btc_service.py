@@ -15,7 +15,7 @@ from .coinbase import (
 
 COINGECKO_BASE = "https://api.coingecko.com/api/v3"
 
-# kleine Caches, damit dein Frontend nicht jede Sekunde externe APIs spammt
+# kleine Caches, damit Frontend nicht jede Sekunde externe APIs spammt
 _btc_price_cache: dict[str, Any] = {"at": None, "price": None, "source": None}
 _BTC_PRICE_TTL = timedelta(seconds=10)
 
